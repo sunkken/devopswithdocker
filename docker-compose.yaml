@@ -1,27 +1,20 @@
 services:
 
-  nginx:
-    image: nginx:latest
-    ports:
-      - "80:80"
-    volumes:
-      - type: bind
-        source: ./nginx.conf
-        target: /etc/nginx/nginx.conf
-    depends_on:
-      - example-frontend
-      - example-backend
-
   example-frontend:
     image: example-frontend:latest
     build:
       context: ./example-frontend
       dockerfile: Dockerfile
-    command: ["serve", "-s", "-l", "5000", "build"]
+    container_name: example-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - example-backend
 
   example-backend:
     image: example-backend:latest
     build: ./example-backend
+    container_name: example-backend
     environment:
       - REDIS_HOST=redis
       - POSTGRES_HOST=db
@@ -30,7 +23,6 @@ services:
       - POSTGRES_DB=postgres
     depends_on:
       - db
-    entrypoint: ["./server"]
 
   redis:
     image: redis:latest

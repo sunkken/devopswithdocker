@@ -1,26 +1,25 @@
-# obs obs, since node (java) is not compiled, can't use multi-stage build to reduce image size!
-FROM node:14-alpine AS build
+# obs obs, since node (java) is not compiled, 
+# multi-stage build with prod starting from node doesn't help much.
+FROM node:14-alpine AS build-stage
 
 WORKDIR /usr/src/app
+
+COPY package*.json ./
+
+RUN npm ci
 
 COPY . .
 
-RUN npm install
-
-# production
 RUN npm run build
 
-FROM node:14-alpine AS runtime
+# production
+FROM nginx:1.25-alpine
 
 WORKDIR /usr/src/app
 
-COPY --from=build /usr/src/app/build ./build
+COPY --from=build-stage /usr/src/app/build /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-RUN npm install -g serve
+EXPOSE 80
 
-EXPOSE 5000
-
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-USER appuser
-
-CMD ["serve", "-s", "-l", "5000", "build"]
+CMD ["nginx", "-g", "daemon off;"]

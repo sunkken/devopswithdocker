@@ -14,12 +14,11 @@ RUN npm run build
 
 # production
 FROM nginx:1.25-alpine
-
 WORKDIR /usr/src/app
 
 COPY --from=build-stage /usr/src/app/build /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/nginx.conf
 
-EXPOSE 80
-
+EXPOSE 8080
+USER 101
 CMD ["nginx", "-g", "daemon off;"]

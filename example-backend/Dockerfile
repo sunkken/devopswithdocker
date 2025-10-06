@@ -11,15 +11,11 @@ RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o server
 # production
 FROM scratch
 
-# Copy CA certificates (only needed if your app uses HTTPS)
-COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-
-# Copy the compiled binary
-COPY --from=build /usr/src/app/server /usr/src/app/server
-
 WORKDIR /usr/src/app
 
-COPY --from=build /usr/src/app/server .
+# Copy binary and CA certificates (for HTTPS)
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=build /usr/src/app/server /usr/src/app/server
 
 EXPOSE 8080
 

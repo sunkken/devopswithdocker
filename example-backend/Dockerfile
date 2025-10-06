@@ -1,25 +1,28 @@
-FROM golang:1.16-alpine AS build-env
-
-EXPOSE 8080
+FROM golang:1.16-alpine AS build
 
 WORKDIR /usr/src/app
 
 COPY . .
 
-RUN go build
+# Build statically linked binary for scratch
+RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o server
 
 
 # production
-FROM alpine
+FROM scratch
 
-RUN apk update && apk add ca-certificates && rm -rf /var/cache/apk/*
+# Copy CA certificates (only needed if your app uses HTTPS)
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
+# Copy the compiled binary
+COPY --from=build /usr/src/app/server /usr/src/app/server
 
 WORKDIR /usr/src/app
 
-COPY --from=build-env /usr/src/app/server .
+COPY --from=build /usr/src/app/server .
 
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+EXPOSE 8080
 
-USER appuser
+USER 65532:65532
 
-ENTRYPOINT ["./server"]
+ENTRYPOINT ["/usr/src/app/server"]

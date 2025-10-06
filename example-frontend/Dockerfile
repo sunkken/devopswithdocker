@@ -1,6 +1,6 @@
 # obs obs, since node (java) is not compiled, 
 # multi-stage build with prod starting from node doesn't help much.
-FROM node:14-alpine AS build-stage
+FROM node:14-alpine AS build
 
 WORKDIR /usr/src/app
 
@@ -16,7 +16,7 @@ RUN npm run build
 FROM nginx:1.25-alpine
 WORKDIR /usr/src/app
 
-COPY --from=build-stage /usr/src/app/build /usr/share/nginx/html
+COPY --from=build /usr/src/app/build /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/nginx.conf
 
 EXPOSE 8080
